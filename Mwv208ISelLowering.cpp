@@ -696,8 +696,7 @@ SDValue Mwv208TargetLowering::LowerFormalArguments_64(
   unsigned ArgOffset = CCInfo.getStackSize();
   Mwv208MachineFunctionInfo *FuncInfo = MF.getInfo<Mwv208MachineFunctionInfo>();
   // Skip the 128 bytes of register save area.
-  FuncInfo->setVarArgsFrameOffset(ArgOffset + ArgArea +
-                                  Subtarget->getStackPointerBias());
+  FuncInfo->setVarArgsFrameOffset(ArgOffset + ArgArea);
 
   // Save the variable arguments that were passed in registers.
   // The caller is required to reserve stack space for 6 arguments regardless
@@ -1314,7 +1313,7 @@ Mwv208TargetLowering::LowerCall_64(TargetLowering::CallLoweringInfo &CLI,
           VA.getLocVT() == MVT::i128) {
         // Store and reload into the integer register reg and reg+1.
         unsigned Offset = 8 * (VA.getLocReg() - JJ::I0);
-        unsigned StackOffset = Offset + Subtarget->getStackPointerBias() + 128;
+        unsigned StackOffset = Offset + 128;
         SDValue StackPtr = DAG.getRegister(JJ::O6, PtrVT);
         SDValue HiPtrOff = DAG.getIntPtrConstant(StackOffset, DL);
         HiPtrOff = DAG.getNode(ISD::ADD, DL, PtrVT, StackPtr, HiPtrOff);
@@ -1373,8 +1372,7 @@ Mwv208TargetLowering::LowerCall_64(TargetLowering::CallLoweringInfo &CLI,
     SDValue StackPtr = DAG.getRegister(JJ::O6, PtrVT);
     // The argument area starts at %fp+BIAS+128 in the callee frame,
     // %sp+BIAS+128 in ours.
-    SDValue PtrOff = DAG.getIntPtrConstant(
-        VA.getLocMemOffset() + Subtarget->getStackPointerBias() + 128, DL);
+    SDValue PtrOff = DAG.getIntPtrConstant(VA.getLocMemOffset() + 128, DL);
     PtrOff = DAG.getNode(ISD::ADD, DL, PtrVT, StackPtr, PtrOff);
     MemOpChains.push_back(
         DAG.getStore(Chain, DL, Arg, PtrOff, MachinePointerInfo()));
@@ -2879,7 +2877,7 @@ static SDValue LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG,
     regSpillArea = 96;
   }
 
-  int64_t Bias = Subtarget->getStackPointerBias();
+  int64_t Bias = 0;
 
   // Debias and increment JJ past the reserved spill area.
   // We need the JJ to point to the first usable region before calculating
@@ -2921,7 +2919,7 @@ static SDValue getFRAMEADDR(uint64_t depth, SDValue Op, SelectionDAG &DAG,
   EVT VT = Op.getValueType();
   SDLoc dl(Op);
   unsigned FrameReg = JJ::I6;
-  unsigned stackBias = Subtarget->getStackPointerBias();
+  unsigned stackBias = 0;
 
   SDValue FrameAddr;
   SDValue Chain;

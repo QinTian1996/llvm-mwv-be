@@ -25,17 +25,10 @@ using namespace llvm;
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeMwv208Target() {
   // Register the target.
   RegisterTargetMachine<Mwv208V8TargetMachine> X(getTheMwv208Target());
-  RegisterTargetMachine<Mwv208V9TargetMachine> Y(getTheMwv208V9Target());
-  RegisterTargetMachine<Mwv208elTargetMachine> Z(getTheMwv208elTarget());
 
   PassRegistry &PR = *PassRegistry::getPassRegistry();
   initializeMwv208DAGToDAGISelLegacyPass(PR);
-  initializeErrataWorkaroundPass(PR);
 }
-
-static cl::opt<bool>
-    BranchRelaxation("mwv208-enable-branch-relax", cl::Hidden, cl::init(true),
-                     cl::desc("Relax out of range conditional branches"));
 
 static std::string computeDataLayout(const Triple &T, bool is64Bit) {
   // Mwv208 is typically big endian, but some are little.
@@ -114,7 +107,7 @@ Mwv208TargetMachine::Mwv208TargetMachine(const Target &T, const Triple &TT,
           getEffectiveMwv208CodeModel(CM, getEffectiveRelocModel(RM), is64bit,
                                       JIT),
           OL),
-      TLOF(std::make_unique<Mwv208ELFTargetObjectFile>()), is64Bit(is64bit) {
+      TLOF(std::make_unique<Mwv208ELFTargetObjectFile>()) {
   initAsmInfo();
 }
 
@@ -122,35 +115,14 @@ Mwv208TargetMachine::~Mwv208TargetMachine() = default;
 
 const Mwv208Subtarget *
 Mwv208TargetMachine::getSubtargetImpl(const Function &F) const {
-  Attribute CPUAttr = F.getFnAttribute("target-cpu");
-  Attribute TuneAttr = F.getFnAttribute("tune-cpu");
-  Attribute FSAttr = F.getFnAttribute("target-features");
+  std::string CPU = "v8";
+  std::string FS = "";
 
-  std::string CPU =
-      CPUAttr.isValid() ? CPUAttr.getValueAsString().str() : TargetCPU;
-  std::string TuneCPU =
-      TuneAttr.isValid() ? TuneAttr.getValueAsString().str() : CPU;
-  std::string FS =
-      FSAttr.isValid() ? FSAttr.getValueAsString().str() : TargetFS;
-
-  // FIXME: This is related to the code below to reset the target options,
-  // we need to know whether or not the soft float flag is set on the
-  // function, so we can enable it as a subtarget feature.
-  bool softFloat = F.getFnAttribute("use-soft-float").getValueAsBool();
-
-  if (softFloat)
-    FS += FS.empty() ? "+soft-float" : ",+soft-float";
-
-  auto &I = SubtargetMap[CPU + FS];
-  if (!I) {
-    // This needs to be done before we create a new subtarget since any
-    // creation will depend on the TM and the code generation flags on the
-    // function that reside in TargetOptions.
-    resetTargetOptions(F);
-    I = std::make_unique<Mwv208Subtarget>(CPU, TuneCPU, FS, *this,
-                                          this->is64Bit);
+  if (!DefaultSubtarget) {
+    DefaultSubtarget =
+        std::make_unique<Mwv208Subtarget>(CPU, CPU, FS, *this, false);
   }
-  return I.get();
+  return DefaultSubtarget.get();
 }
 
 MachineFunctionInfo *Mwv208TargetMachine::createMachineFunctionInfo(
@@ -192,39 +164,11 @@ bool Mwv208PassConfig::addInstSelector() {
   return false;
 }
 
-void Mwv208PassConfig::addPreEmitPass() {
-  if (BranchRelaxation)
-    addPass(&BranchRelaxationPassID);
-
-  addPass(new InsertNOPLoad());
-  addPass(new DetectRoundChange());
-  addPass(new FixAllFDIVSQRT());
-  addPass(new ErrataWorkaround());
-}
+void Mwv208PassConfig::addPreEmitPass() {}
 
 void Mwv208V8TargetMachine::anchor() {}
 
 Mwv208V8TargetMachine::Mwv208V8TargetMachine(const Target &T, const Triple &TT,
-                                             StringRef CPU, StringRef FS,
-                                             const TargetOptions &Options,
-                                             std::optional<Reloc::Model> RM,
-                                             std::optional<CodeModel::Model> CM,
-                                             CodeGenOptLevel OL, bool JIT)
-    : Mwv208TargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, JIT, false) {}
-
-void Mwv208V9TargetMachine::anchor() {}
-
-Mwv208V9TargetMachine::Mwv208V9TargetMachine(const Target &T, const Triple &TT,
-                                             StringRef CPU, StringRef FS,
-                                             const TargetOptions &Options,
-                                             std::optional<Reloc::Model> RM,
-                                             std::optional<CodeModel::Model> CM,
-                                             CodeGenOptLevel OL, bool JIT)
-    : Mwv208TargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, JIT, true) {}
-
-void Mwv208elTargetMachine::anchor() {}
-
-Mwv208elTargetMachine::Mwv208elTargetMachine(const Target &T, const Triple &TT,
                                              StringRef CPU, StringRef FS,
                                              const TargetOptions &Options,
                                              std::optional<Reloc::Model> RM,

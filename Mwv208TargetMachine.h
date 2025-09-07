@@ -23,9 +23,11 @@
 namespace llvm {
 
 class Mwv208TargetMachine : public CodeGenTargetMachineImpl {
+  /* use this to gen fatbin file*/
   std::unique_ptr<TargetLoweringObjectFile> TLOF;
-  bool is64Bit;
-  mutable StringMap<std::unique_ptr<Mwv208Subtarget>> SubtargetMap;
+
+  /* the only subtarget*/
+  mutable std::unique_ptr<Mwv208Subtarget> DefaultSubtarget;
 
 public:
   Mwv208TargetMachine(const Target &T, const Triple &TT, StringRef CPU,
@@ -55,30 +57,6 @@ class Mwv208V8TargetMachine : public Mwv208TargetMachine {
 
 public:
   Mwv208V8TargetMachine(const Target &T, const Triple &TT, StringRef CPU,
-                        StringRef FS, const TargetOptions &Options,
-                        std::optional<Reloc::Model> RM,
-                        std::optional<CodeModel::Model> CM, CodeGenOptLevel OL,
-                        bool JIT);
-};
-
-/// Mwv208 64-bit target machine
-///
-class Mwv208V9TargetMachine : public Mwv208TargetMachine {
-  virtual void anchor();
-
-public:
-  Mwv208V9TargetMachine(const Target &T, const Triple &TT, StringRef CPU,
-                        StringRef FS, const TargetOptions &Options,
-                        std::optional<Reloc::Model> RM,
-                        std::optional<CodeModel::Model> CM, CodeGenOptLevel OL,
-                        bool JIT);
-};
-
-class Mwv208elTargetMachine : public Mwv208TargetMachine {
-  virtual void anchor();
-
-public:
-  Mwv208elTargetMachine(const Target &T, const Triple &TT, StringRef CPU,
                         StringRef FS, const TargetOptions &Options,
                         std::optional<Reloc::Model> RM,
                         std::optional<CodeModel::Model> CM, CodeGenOptLevel OL,

@@ -255,8 +255,7 @@ Mwv208FrameLowering::getFrameIndexReference(const MachineFunction &MF, int FI,
     UseFP = true;
   }
 
-  int64_t FrameOffset =
-      MF.getFrameInfo().getObjectOffset(FI) + Subtarget.getStackPointerBias();
+  int64_t FrameOffset = MF.getFrameInfo().getObjectOffset(FI);
 
   if (UseFP) {
     FrameReg = RegInfo->getFrameRegister(MF);
