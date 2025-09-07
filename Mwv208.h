@@ -28,7 +28,6 @@ class PassRegistry;
 class Mwv208TargetMachine;
 
 FunctionPass *createMwv208ISelDag(Mwv208TargetMachine &TM);
-FunctionPass *createMwv208DelaySlotFillerPass();
 
 void LowerMwv208MachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
                                      AsmPrinter &AP);

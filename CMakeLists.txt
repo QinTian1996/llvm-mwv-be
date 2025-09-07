@@ -16,7 +16,6 @@ tablegen(LLVM Mwv208GenSubtargetInfo.inc -gen-subtarget)
 add_public_tablegen_target(Mwv208CommonTableGen)
 
 add_llvm_target(Mwv208CodeGen
-  DelaySlotFiller.cpp
   LeonPasses.cpp
   Mwv208AsmPrinter.cpp
   Mwv208InstrInfo.cpp

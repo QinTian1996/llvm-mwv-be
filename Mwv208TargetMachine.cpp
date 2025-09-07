@@ -196,7 +196,6 @@ void Mwv208PassConfig::addPreEmitPass() {
   if (BranchRelaxation)
     addPass(&BranchRelaxationPassID);
 
-  addPass(createMwv208DelaySlotFillerPass());
   addPass(new InsertNOPLoad());
   addPass(new DetectRoundChange());
   addPass(new FixAllFDIVSQRT());
