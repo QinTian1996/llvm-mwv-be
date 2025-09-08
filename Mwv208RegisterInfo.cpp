@@ -116,8 +116,7 @@ bool Mwv208RegisterInfo::isReservedReg(const MachineFunction &MF,
 const TargetRegisterClass *
 Mwv208RegisterInfo::getPointerRegClass(const MachineFunction &MF,
                                        unsigned Kind) const {
-  const Mwv208Subtarget &Subtarget = MF.getSubtarget<Mwv208Subtarget>();
-  return Subtarget.is64Bit() ? &JJ::I64RegsRegClass : &JJ::IntRegsRegClass;
+  return &JJ::IntRegsRegClass;
 }
 
 static void replaceFI(MachineFunction &MF, MachineBasicBlock::iterator II,
