@@ -32,7 +32,6 @@ FunctionPass *createMwv208ISelDag(Mwv208TargetMachine &TM);
 void LowerMwv208MachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
                                      AsmPrinter &AP);
 void initializeMwv208DAGToDAGISelLegacyPass(PassRegistry &);
-void initializeErrataWorkaroundPass(PassRegistry &);
 } // namespace llvm
 
 namespace llvm {

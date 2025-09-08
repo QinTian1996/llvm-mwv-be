@@ -68,7 +68,6 @@ def HasPWRPSR : Predicate<"Subtarget->hasPWRPSR()">,
 // UMAC and SMAC instructions
 def HasUMAC_SMAC : Predicate<"Subtarget->hasUmacSmac()">;
 
-def HasNoFdivSqrtFix : Predicate<"!Subtarget->fixAllFDIVSQRT()">;
 def HasFMULS : Predicate<"!Subtarget->hasNoFMULS()">;
 def HasFSMULD : Predicate<"!Subtarget->hasNoFSMULD()">;
 
@@ -1325,29 +1324,6 @@ def FABSS : F3_3u<2, 0b110100, 0b000001001,
                  "fabss $rs2, $rd",
                  [(set f32:$rd, (fabs f32:$rs2))],
                  IIC_fpu_abs>;
-
-
-// Floating-point Square Root Instructions, p.145
-// FSQRTS generates an erratum on LEON processors, so by disabling this instruction
-// this will be promoted to use FSQRTD with doubles instead.
-let Predicates = [HasNoFdivSqrtFix] in
-def FSQRTS : F3_3u<2, 0b110100, 0b000101001,
-                  (outs FPRegs:$rd), (ins FPRegs:$rs2),
-                  "fsqrts $rs2, $rd",
-                  [(set f32:$rd, (fsqrt f32:$rs2))],
-                  IIC_fpu_sqrts>;
-def FSQRTD : F3_3u<2, 0b110100, 0b000101010,
-                  (outs DFPRegs:$rd), (ins DFPRegs:$rs2),
-                  "fsqrtd $rs2, $rd",
-                  [(set f64:$rd, (fsqrt f64:$rs2))],
-                  IIC_fpu_sqrtd>;
-def FSQRTQ : F3_3u<2, 0b110100, 0b000101011,
-                  (outs QFPRegs:$rd), (ins QFPRegs:$rs2),
-                  "fsqrtq $rs2, $rd",
-                  [(set f128:$rd, (fsqrt f128:$rs2))]>,
-                  Requires<[HasHardQuad]>;
-
-
 
 // Floating-point Add and Subtract Instructions, p. 146
 def FADDS  : F3_3<2, 0b110100, 0b001000001,

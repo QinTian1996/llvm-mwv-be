@@ -1693,20 +1693,7 @@ Mwv208TargetLowering::Mwv208TargetLowering(const TargetMachine &TM,
   }
 
   // ATOMICs.
-  // Atomics are supported on Mwv208V9. 32-bit atomics are also
-  // supported by some Leon Mwv208V8 variants. Otherwise, atomics
-  // are unsupported.
-  if (Subtarget->isV9()) {
-    // TODO: we _ought_ to be able to support 64-bit atomics on 32-bit mwv208v9,
-    // but it hasn't been implemented in the backend yet.
-    if (Subtarget->is64Bit())
-      setMaxAtomicSizeInBitsSupported(64);
-    else
-      setMaxAtomicSizeInBitsSupported(32);
-  } else if (Subtarget->hasLeonCasa())
-    setMaxAtomicSizeInBitsSupported(32);
-  else
-    setMaxAtomicSizeInBitsSupported(0);
+  setMaxAtomicSizeInBitsSupported(0);
 
   setMinCmpXchgSizeInBits(32);
 
@@ -1887,23 +1874,9 @@ Mwv208TargetLowering::Mwv208TargetLowering(const TargetMachine &TM,
     }
   }
 
-  if (Subtarget->fixAllFDIVSQRT()) {
-    // Promote FDIVS and FSQRTS to FDIVD and FSQRTD instructions instead as
-    // the former instructions generate errata on LEON processors.
-    setOperationAction(ISD::FDIV, MVT::f32, Promote);
-    setOperationAction(ISD::FSQRT, MVT::f32, Promote);
-  }
-
   if (Subtarget->hasNoFMULS()) {
     setOperationAction(ISD::FMUL, MVT::f32, Promote);
   }
-
-  // Custom combine bitcast between f64 and v2i32
-  if (!Subtarget->is64Bit())
-    setTargetDAGCombine(ISD::BITCAST);
-
-  if (Subtarget->hasLeonCycleCounter())
-    setOperationAction(ISD::READCYCLECOUNTER, MVT::i64, Custom);
 
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
 
