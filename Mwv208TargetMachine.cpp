@@ -32,7 +32,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeMwv208Target() {
 
 static std::string computeDataLayout(const Triple &T, bool is64Bit) {
   // Mwv208 is typically big endian, but some are little.
-  std::string Ret = T.getArch() == Triple::sparcel ? "e" : "E";
+  std::string Ret = "E";
   Ret += "-m:e";
 
   // Some ABIs have 32bit pointers.

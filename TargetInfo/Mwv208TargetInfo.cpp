@@ -25,10 +25,6 @@ Target &llvm::getTheMwv208elTarget() {
 }
 
 extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeMwv208TargetInfo() {
-  RegisterTarget<Triple::sparc, /*HasJIT=*/false> X(
+  RegisterTarget<Triple::UnknownArch, /*HasJIT=*/false> X(
       getTheMwv208Target(), "mwv208", "Mwv208", "Mwv208");
-  RegisterTarget<Triple::sparcv9, /*HasJIT=*/false> Y(
-      getTheMwv208V9Target(), "mwv208v9", "Mwv208 V9", "Mwv208");
-  RegisterTarget<Triple::sparcel, /*HasJIT=*/false> Z(
-      getTheMwv208elTarget(), "mwv208el", "Mwv208 LE", "Mwv208");
 }

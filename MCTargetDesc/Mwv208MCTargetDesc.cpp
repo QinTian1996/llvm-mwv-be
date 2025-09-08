@@ -81,7 +81,7 @@ static MCRegisterInfo *createMwv208MCRegisterInfo(const Triple &TT) {
 static MCSubtargetInfo *
 createMwv208MCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
   if (CPU.empty())
-    CPU = (TT.getArch() == Triple::sparcv9) ? "v9" : "v8";
+    CPU = "v8";
   return createMwv208MCSubtargetInfoImpl(TT, CPU, /*TuneCPU*/ CPU, FS);
 }
 

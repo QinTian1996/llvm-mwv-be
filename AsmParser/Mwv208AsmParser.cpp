@@ -124,9 +124,7 @@ class Mwv208AsmParser : public MCTargetAsmParser {
 
   bool matchMwv208AsmModifiers(const MCExpr *&EVal, SMLoc &EndLoc);
 
-  bool is64Bit() const {
-    return getSTI().getTargetTriple().getArch() == Triple::sparcv9;
-  }
+  bool is64Bit() const { return false; }
 
   bool expandSET(MCInst &Inst, SMLoc IDLoc,
                  SmallVectorImpl<MCInst> &Instructions);

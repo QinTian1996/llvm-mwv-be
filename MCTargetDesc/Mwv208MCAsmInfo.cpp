@@ -24,17 +24,12 @@ using namespace llvm;
 void Mwv208ELFMCAsmInfo::anchor() {}
 
 Mwv208ELFMCAsmInfo::Mwv208ELFMCAsmInfo(const Triple &TheTriple) {
-  bool isV9 = (TheTriple.getArch() == Triple::sparcv9);
-  IsLittleEndian = (TheTriple.getArch() == Triple::sparcel);
-
-  if (isV9) {
-    CodePointerSize = CalleeSaveStackSlotSize = 8;
-  }
+  IsLittleEndian = false;
 
   Data16bitsDirective = "\t.half\t";
   Data32bitsDirective = "\t.word\t";
   // .xword is only supported by V9.
-  Data64bitsDirective = (isV9) ? "\t.xword\t" : nullptr;
+  Data64bitsDirective = nullptr;
   ZeroDirective = "\t.skip\t";
   CommentString = "!";
   SupportsDebugInformation = true;
