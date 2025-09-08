@@ -51,14 +51,6 @@ def HasVIS3 : Predicate<"Subtarget->isVIS3()">,
 // point instructions.
 def HasHardQuad : Predicate<"Subtarget->hasHardQuad()">;
 
-// HasLeonCASA - This is true when the target processor supports the Leon CASA
-// instruction.
-def HasLeonCASA : Predicate<"Subtarget->hasLeonCasa()">;
-
-// HasCASA - This is true when the target processor supports CASA instruction.
-def HasCASA : Predicate<"Subtarget->hasLeonCasa() || Subtarget->isV9()">,
-              AssemblerPredicate<(any_of LeonCASA, FeatureV9)>;
-
 // HasPWRPSR - This is true when the target processor supports partial
 // writes to the PSR register that only affects the ET field.
 def HasPWRPSR : Predicate<"Subtarget->hasPWRPSR()">,
@@ -1693,21 +1685,6 @@ let Predicates = [HasV9], rd = 15, rs1 = 0b00000 in
                 (ins simm13Op:$simm13),
                  "sir $simm13", []>;
 
-// CASA supported on all V9, some LEON3 and all LEON4 processors.
-let Predicates = [HasCASA], Constraints = "$swap = $rd" in
-  def CASArr: F3_1_asi<3, 0b111100,
-                (outs IntRegs:$rd), (ins IntRegs:$rs1, IntRegs:$rs2,
-                                     IntRegs:$swap, ASITag:$asi),
-                 "casa [$rs1] $asi, $rs2, $rd", []>;
-
-// On the other hand, CASA that takes its ASI from a register
-// is only supported on V9 processors.
-let Predicates = [HasV9], Uses = [ASR3], Constraints = "$swap = $rd" in
-  def CASAri: F3_1_cas_asi<3, 0b111100,
-                (outs IntRegs:$rd), (ins IntRegs:$rs1, IntRegs:$rs2,
-                                     IntRegs:$swap),
-                 "casa [$rs1] %asi, $rs2, $rd", []>;
-
 // TODO: Add DAG sequence to lower these instructions. Currently, only provided
 // as inline assembler-supported instructions.
 let Predicates = [HasUMAC_SMAC], Defs = [Y, ASR18], Uses = [Y, ASR18] in {
@@ -1906,15 +1883,6 @@ def : Pat<(atomic_store_16 i32:$val, ADDRrr:$dst), (STHrr ADDRrr:$dst, $val)>;
 def : Pat<(atomic_store_16 i32:$val, ADDRri:$dst), (STHri ADDRri:$dst, $val)>;
 def : Pat<(atomic_store_32 i32:$val, ADDRrr:$dst), (STrr ADDRrr:$dst, $val)>;
 def : Pat<(atomic_store_32 i32:$val, ADDRri:$dst), (STri ADDRri:$dst, $val)>;
-
-let Predicates = [HasV9] in
-def : Pat<(atomic_cmp_swap_i32 iPTR:$rs1, i32:$rs2, i32:$swap),
-          (CASArr $rs1, $rs2, $swap, 0x80)>;
-
-// Same pattern as CASArr above, but with a different ASI.
-let Predicates = [HasLeonCASA] in
-def : Pat<(atomic_cmp_swap_i32 iPTR:$rs1, i32:$rs2, i32:$swap),
-          (CASArr $rs1, $rs2, $swap, 0x0A)>;
 
 // A register pair with zero upper half.
 // The upper part is done with ORrr instead of `COPY G0`

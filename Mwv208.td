@@ -74,7 +74,7 @@ def TuneSlowRDPC : SubtargetFeature<"slow-rdpc", "HasSlowRDPC", "true",
                                     "rd %pc, %XX is slow", [FeatureV9]>;
 
 //==== Features added predmoninantly for LEON subtarget support
-include "LeonFeatures.td"
+//include "LeonFeatures.td"
 
 //==== Register allocation tweaks needed by some low-level software
 foreach i = 1 ... 7  in
@@ -121,44 +121,8 @@ class Proc<string Name, list<SubtargetFeature> Features,
  : Processor<Name, NoItineraries, Features, TuneFeatures>;
 
 def : Proc<"generic",         []>;
-def : Proc<"v7",              [FeatureSoftMulDiv, FeatureNoFSMULD]>;
 def : Proc<"v8",              []>;
-def : Proc<"supermwv208",      []>;
-def : Proc<"mwv208lite",       []>;
-def : Proc<"f934",            []>;
-def : Proc<"hypermwv208",      []>;
-def : Proc<"mwv208lite86x",    []>;
-def : Proc<"mwv208let",        []>;
-def : Proc<"tsc701",          []>;
-def : Proc<"myriad2",         [FeatureLeon, LeonCASA]>;
-def : Proc<"myriad2.1",       [FeatureLeon, LeonCASA]>;
-def : Proc<"myriad2.2",       [FeatureLeon, LeonCASA]>;
-def : Proc<"myriad2.3",       [FeatureLeon, LeonCASA]>;
-def : Proc<"ma2100",          [FeatureLeon, LeonCASA]>;
-def : Proc<"ma2150",          [FeatureLeon, LeonCASA]>;
-def : Proc<"ma2155",          [FeatureLeon, LeonCASA]>;
-def : Proc<"ma2450",          [FeatureLeon, LeonCASA]>;
-def : Proc<"ma2455",          [FeatureLeon, LeonCASA]>;
-def : Proc<"ma2x5x",          [FeatureLeon, LeonCASA]>;
-def : Proc<"ma2080",          [FeatureLeon, LeonCASA]>;
-def : Proc<"ma2085",          [FeatureLeon, LeonCASA]>;
-def : Proc<"ma2480",          [FeatureLeon, LeonCASA]>;
-def : Proc<"ma2485",          [FeatureLeon, LeonCASA]>;
-def : Proc<"ma2x8x",          [FeatureLeon, LeonCASA]>;
-def : Proc<"v9",              [FeatureV9]>;
-def : Proc<"ultramwv208",      [FeatureV9, FeatureV8Deprecated, FeatureVIS],
-                              [TuneSlowRDPC]>;
-def : Proc<"ultramwv2083",     [FeatureV9, FeatureV8Deprecated, FeatureVIS,
-                               FeatureVIS2],
-                              [TuneSlowRDPC]>;
-def : Proc<"niagara",         [FeatureV9, FeatureV8Deprecated, FeatureVIS,
-                               FeatureVIS2]>;
-def : Proc<"niagara2",        [FeatureV9, FeatureV8Deprecated, UsePopc,
-                               FeatureVIS, FeatureVIS2]>;
-def : Proc<"niagara3",        [FeatureV9, FeatureV8Deprecated, UsePopc,
-                               FeatureVIS, FeatureVIS2]>;
-def : Proc<"niagara4",        [FeatureV9, FeatureV8Deprecated, UsePopc,
-                               FeatureVIS, FeatureVIS2, FeatureVIS3]>;
+
 
 
 //===----------------------------------------------------------------------===//
