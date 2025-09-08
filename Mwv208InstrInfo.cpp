@@ -24,6 +24,8 @@
 
 using namespace llvm;
 
+#include <iostream>
+
 #define GET_INSTRINFO_CTOR_DTOR
 #include "Mwv208GenInstrInfo.inc"
 
@@ -482,90 +484,13 @@ void Mwv208InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                   const DebugLoc &DL, MCRegister DestReg,
                                   MCRegister SrcReg, bool KillSrc,
                                   bool RenamableDest, bool RenamableSrc) const {
-  unsigned numSubRegs = 0;
-  unsigned movOpc = 0;
-  const unsigned *subRegIdx = nullptr;
-  bool ExtraG0 = false;
-
-  const unsigned DW_SubRegsIdx[] = {JJ::sub_even, JJ::sub_odd};
-  const unsigned DFP_FP_SubRegsIdx[] = {JJ::sub_even, JJ::sub_odd};
-  const unsigned QFP_DFP_SubRegsIdx[] = {JJ::sub_even64, JJ::sub_odd64};
-  const unsigned QFP_FP_SubRegsIdx[] = {JJ::sub_even, JJ::sub_odd,
-                                        JJ::sub_odd64_then_sub_even,
-                                        JJ::sub_odd64_then_sub_odd};
-
-  if (JJ::IntRegsRegClass.contains(DestReg, SrcReg))
+  if (JJ::IntRegsRegClass.contains(DestReg, SrcReg)) {
     BuildMI(MBB, I, DL, get(JJ::ORrr), DestReg)
         .addReg(JJ::G0)
         .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (JJ::IntPairRegClass.contains(DestReg, SrcReg)) {
-    subRegIdx = DW_SubRegsIdx;
-    numSubRegs = 2;
-    movOpc = JJ::ORrr;
-    ExtraG0 = true;
-  } else if (JJ::FPRegsRegClass.contains(DestReg, SrcReg))
-    BuildMI(MBB, I, DL, get(JJ::FMOVS), DestReg)
-        .addReg(SrcReg, getKillRegState(KillSrc));
-  else if (JJ::DFPRegsRegClass.contains(DestReg, SrcReg)) {
-    if (Subtarget.isV9()) {
-      BuildMI(MBB, I, DL, get(JJ::FMOVD), DestReg)
-          .addReg(SrcReg, getKillRegState(KillSrc));
-    } else {
-      // Use two FMOVS instructions.
-      subRegIdx = DFP_FP_SubRegsIdx;
-      numSubRegs = 2;
-      movOpc = JJ::FMOVS;
-    }
-  } else if (JJ::QFPRegsRegClass.contains(DestReg, SrcReg)) {
-    if (Subtarget.isV9()) {
-      if (Subtarget.hasHardQuad()) {
-        BuildMI(MBB, I, DL, get(JJ::FMOVQ), DestReg)
-            .addReg(SrcReg, getKillRegState(KillSrc));
-      } else {
-        // Use two FMOVD instructions.
-        subRegIdx = QFP_DFP_SubRegsIdx;
-        numSubRegs = 2;
-        movOpc = JJ::FMOVD;
-      }
-    } else {
-      // Use four FMOVS instructions.
-      subRegIdx = QFP_FP_SubRegsIdx;
-      numSubRegs = 4;
-      movOpc = JJ::FMOVS;
-    }
-  } else if (JJ::ASRRegsRegClass.contains(DestReg) &&
-             JJ::IntRegsRegClass.contains(SrcReg)) {
-    BuildMI(MBB, I, DL, get(JJ::WRASRrr), DestReg)
-        .addReg(JJ::G0)
-        .addReg(SrcReg, getKillRegState(KillSrc));
-  } else if (JJ::IntRegsRegClass.contains(DestReg) &&
-             JJ::ASRRegsRegClass.contains(SrcReg)) {
-    BuildMI(MBB, I, DL, get(JJ::RDASR), DestReg)
-        .addReg(SrcReg, getKillRegState(KillSrc));
+    std::cout << __LINE__ << std::endl;
   } else
     llvm_unreachable("Impossible reg-to-reg copy");
-
-  if (numSubRegs == 0 || subRegIdx == nullptr || movOpc == 0)
-    return;
-
-  const TargetRegisterInfo *TRI = &getRegisterInfo();
-  MachineInstr *MovMI = nullptr;
-
-  for (unsigned i = 0; i != numSubRegs; ++i) {
-    Register Dst = TRI->getSubReg(DestReg, subRegIdx[i]);
-    Register Src = TRI->getSubReg(SrcReg, subRegIdx[i]);
-    assert(Dst && Src && "Bad sub-register");
-
-    MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(movOpc), Dst);
-    if (ExtraG0)
-      MIB.addReg(JJ::G0);
-    MIB.addReg(Src);
-    MovMI = MIB.getInstr();
-  }
-  // Add implicit super-register defs and kills to the last MovMI.
-  MovMI->addRegisterDefined(DestReg, TRI);
-  if (KillSrc)
-    MovMI->addRegisterKilled(SrcReg, TRI);
 }
 
 void Mwv208InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
@@ -632,6 +557,7 @@ void Mwv208InstrInfo::loadRegFromStackSlot(
     MachineBasicBlock &MBB, MachineBasicBlock::iterator I, Register DestReg,
     int FI, const TargetRegisterClass *RC, const TargetRegisterInfo *TRI,
     Register VReg, MachineInstr::MIFlag Flags) const {
+  return;
   DebugLoc DL;
   if (I != MBB.end())
     DL = I->getDebugLoc();
@@ -699,38 +625,4 @@ Register Mwv208InstrInfo::getGlobalBaseReg(MachineFunction *MF) const {
   BuildMI(FirstMBB, MBBI, dl, get(JJ::GETPCX), GlobalBaseReg);
   Mwv208FI->setGlobalBaseReg(GlobalBaseReg);
   return GlobalBaseReg;
-}
-
-unsigned Mwv208InstrInfo::getInstSizeInBytes(const MachineInstr &MI) const {
-  unsigned Opcode = MI.getOpcode();
-
-  if (MI.isInlineAsm()) {
-    const MachineFunction *MF = MI.getParent()->getParent();
-    const char *AsmStr = MI.getOperand(0).getSymbolName();
-    return getInlineAsmLength(AsmStr, *MF->getTarget().getMCAsmInfo());
-  }
-
-  // If the instruction has a delay slot, be conservative and also include
-  // it for sizing purposes. This is done so that the BranchRelaxation pass
-  // will not mistakenly mark out-of-range branches as in-range.
-  if (MI.hasDelaySlot())
-    return get(Opcode).getSize() * 2;
-  return get(Opcode).getSize();
-}
-
-bool Mwv208InstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
-  switch (MI.getOpcode()) {
-  case TargetOpcode::LOAD_STACK_GUARD: {
-    assert(Subtarget.isTargetLinux() &&
-           "Only Linux target is expected to contain LOAD_STACK_GUARD");
-    // offsetof(tcbhead_t, stack_guard) from sysdeps/mwv208/nptl/tls.h in glibc.
-    const int64_t Offset = Subtarget.is64Bit() ? 0x28 : 0x14;
-    MI.setDesc(get(Subtarget.is64Bit() ? JJ::LDXri : JJ::LDri));
-    MachineInstrBuilder(*MI.getParent()->getParent(), MI)
-        .addReg(JJ::G7)
-        .addImm(Offset);
-    return true;
-  }
-  }
-  return false;
 }

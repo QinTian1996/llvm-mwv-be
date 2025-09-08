@@ -105,13 +105,6 @@ public:
       MachineInstr::MIFlag Flags = MachineInstr::NoFlags) const override;
 
   Register getGlobalBaseReg(MachineFunction *MF) const;
-
-  /// GetInstSize - Return the number of bytes of code the specified
-  /// instruction may be.  This returns the maximum number of bytes.
-  unsigned getInstSizeInBytes(const MachineInstr &MI) const override;
-
-  // Lower pseudo instructions after register allocation.
-  bool expandPostRAPseudo(MachineInstr &MI) const override;
 };
 
 } // namespace llvm
