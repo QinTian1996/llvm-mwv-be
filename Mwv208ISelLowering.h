@@ -67,7 +67,7 @@ class Mwv208TargetLowering : public TargetLowering {
 
 public:
   Mwv208TargetLowering(const TargetMachine &TM, const Mwv208Subtarget &STI);
-  SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
+  // SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
 
   bool useSoftFloat() const override;
 
@@ -120,8 +120,8 @@ public:
   }
 
   /// Override to support customized stack guard loading.
-  bool useLoadStackGuardNode(const Module &M) const override;
-  void insertSSPDeclarations(Module &M) const override;
+  /*   bool useLoadStackGuardNode(const Module &M) const override;
+    void insertSSPDeclarations(Module &M) const override; */
 
   /// getSetCCResultType - Return the ISD::SETCC ValueType
   EVT getSetCCResultType(const DataLayout &DL, LLVMContext &Context,
@@ -191,8 +191,6 @@ public:
 
   SDValue bitcastConstantFPToInt(ConstantFPSDNode *C, const SDLoc &DL,
                                  SelectionDAG &DAG) const;
-
-  SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const override;
 
   bool IsEligibleForTailCallOptimization(CCState &CCInfo, CallLoweringInfo &CLI,
                                          MachineFunction &MF) const;
