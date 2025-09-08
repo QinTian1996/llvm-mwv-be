@@ -46,9 +46,6 @@ public:
         const DenseMap<MachineBasicBlock *, MachineBasicBlock *> &Src2DstMBB)
       const override;
 
-  Register getGlobalBaseReg() const { return GlobalBaseReg; }
-  void setGlobalBaseReg(Register Reg) { GlobalBaseReg = Reg; }
-
   int getVarArgsFrameOffset() const { return VarArgsFrameOffset; }
   void setVarArgsFrameOffset(int Offset) { VarArgsFrameOffset = Offset; }
 

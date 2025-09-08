@@ -60,7 +60,6 @@ public:
 #include "Mwv208GenDAGISel.inc"
 
 private:
-  SDNode *getGlobalBaseReg();
   bool tryInlineAsm(SDNode *N);
 };
 
@@ -75,14 +74,6 @@ public:
 char Mwv208DAGToDAGISelLegacy::ID = 0;
 
 INITIALIZE_PASS(Mwv208DAGToDAGISelLegacy, DEBUG_TYPE, PASS_NAME, false, false)
-
-SDNode *Mwv208DAGToDAGISel::getGlobalBaseReg() {
-  Register GlobalBaseReg = Subtarget->getInstrInfo()->getGlobalBaseReg(MF);
-  return CurDAG
-      ->getRegister(GlobalBaseReg, TLI->getPointerTy(CurDAG->getDataLayout()))
-      .getNode();
-}
-
 bool Mwv208DAGToDAGISel::SelectADDRri(SDValue Addr, SDValue &Base,
                                       SDValue &Offset) {
   if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
@@ -343,10 +334,6 @@ void Mwv208DAGToDAGISel::Select(SDNode *N) {
       return;
     break;
   }
-  case SPISD::GLOBAL_BASE_REG:
-    ReplaceNode(N, getGlobalBaseReg());
-    return;
-
   case ISD::SDIV:
   case ISD::UDIV: {
     // sdivx / udivx handle 64-bit divides.
