@@ -24,8 +24,6 @@
 
 using namespace llvm;
 
-#include <iostream>
-
 #define GET_INSTRINFO_CTOR_DTOR
 #include "Mwv208GenInstrInfo.inc"
 
@@ -33,17 +31,17 @@ using namespace llvm;
 void Mwv208InstrInfo::anchor() {}
 
 Mwv208InstrInfo::Mwv208InstrInfo(Mwv208Subtarget &ST)
-    : Mwv208GenInstrInfo(JJ::ADJCALLSTACKDOWN, JJ::ADJCALLSTACKUP), RI() {}
+    : Mwv208GenInstrInfo(), RI() {}
 
 void Mwv208InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator I,
                                   const DebugLoc &DL, MCRegister DestReg,
                                   MCRegister SrcReg, bool KillSrc,
                                   bool RenamableDest, bool RenamableSrc) const {
-  if (JJ::IntRegsRegClass.contains(DestReg, SrcReg)) {
-    BuildMI(MBB, I, DL, get(JJ::ORrr), DestReg)
-        .addReg(JJ::G0)
-        .addReg(SrcReg, getKillRegState(KillSrc));
-  } else
-    llvm_unreachable("Impossible reg-to-reg copy");
+  /*   if (MWV208::IntRegsRegClass.contains(DestReg, SrcReg)) {
+      BuildMI(MBB, I, DL, get(MWV208::ORrr), DestReg)
+          .addReg(MWV208::G0)
+          .addReg(SrcReg, getKillRegState(KillSrc));
+    } else
+      llvm_unreachable("Impossible reg-to-reg copy"); */
 }

@@ -43,6 +43,17 @@ public:
                    bool RenamableSrc = false) const override;
 };
 
+// 目标架构特有的TargetInstrInfo子类
+class Mwv208TargetInstrInfo : public TargetInstrInfo {
+private:
+public:
+  // 构造函数：传入目标架构的寄存器信息
+  explicit MyTargetInstrInfo(Mwv208Subtarget &ST);
+
+  bool isLoad(const MachineInstr &MI) const override { return false; };
+  bool isStore(const MachineInstr &MI) const override { return false; };
+};
+
 } // namespace llvm
 
 #endif

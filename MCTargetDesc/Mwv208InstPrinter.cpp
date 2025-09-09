@@ -62,8 +62,8 @@ bool Mwv208InstPrinter::printMwv208AliasInstr(const MCInst *MI,
   switch (MI->getOpcode()) {
   default:
     return false;
-  case JJ::JMPLrr:
-  case JJ::JMPLri: {
+  case MWV208::JMPLrr:
+  case MWV208::JMPLri: {
     if (MI->getNumOperands() != 3)
       return false;
     if (!MI->getOperand(0).isReg())
@@ -71,15 +71,15 @@ bool Mwv208InstPrinter::printMwv208AliasInstr(const MCInst *MI,
     switch (MI->getOperand(0).getReg()) {
     default:
       return false;
-    case JJ::G0: // jmp $addr | ret | retl
+    case MWV208::G0: // jmp $addr | ret | retl
       if (MI->getOperand(2).isImm() && MI->getOperand(2).getImm() == 8) {
         switch (MI->getOperand(1).getReg()) {
         default:
           break;
-        case JJ::I7:
+        case MWV208::I7:
           O << "\tret";
           return true;
-        case JJ::O7:
+        case MWV208::O7:
           O << "\tretl";
           return true;
         }
@@ -87,41 +87,40 @@ bool Mwv208InstPrinter::printMwv208AliasInstr(const MCInst *MI,
       O << "\tjmp ";
       printMemOperand(MI, 1, STI, O);
       return true;
-    case JJ::O7: // call $addr
+    case MWV208::O7: // call $addr
       O << "\tcall ";
       printMemOperand(MI, 1, STI, O);
       return true;
     }
   }
-  case JJ::V9FCMPS:
-  case JJ::V9FCMPD:
-  case JJ::V9FCMPQ:
-  case JJ::V9FCMPES:
-  case JJ::V9FCMPED:
-  case JJ::V9FCMPEQ: {
-    if (isV9(STI) || (MI->getNumOperands() != 3) ||
-        (!MI->getOperand(0).isReg()) ||
-        (MI->getOperand(0).getReg() != JJ::FCC0))
+  case MWV208::V9FCMPS:
+  case MWV208::V9FCMPD:
+  case MWV208::V9FCMPQ:
+  case MWV208::V9FCMPES:
+  case MWV208::V9FCMPED:
+  case MWV208::V9FCMPEQ: {
+    if ((MI->getNumOperands() != 3) || (!MI->getOperand(0).isReg()) ||
+        (MI->getOperand(0).getReg() != MWV208::FCC0))
       return false;
     // if V8, skip printing %fcc0.
     switch (MI->getOpcode()) {
     default:
-    case JJ::V9FCMPS:
+    case MWV208::V9FCMPS:
       O << "\tfcmps ";
       break;
-    case JJ::V9FCMPD:
+    case MWV208::V9FCMPD:
       O << "\tfcmpd ";
       break;
-    case JJ::V9FCMPQ:
+    case MWV208::V9FCMPQ:
       O << "\tfcmpq ";
       break;
-    case JJ::V9FCMPES:
+    case MWV208::V9FCMPES:
       O << "\tfcmpes ";
       break;
-    case JJ::V9FCMPED:
+    case MWV208::V9FCMPED:
       O << "\tfcmped ";
       break;
-    case JJ::V9FCMPEQ:
+    case MWV208::V9FCMPEQ:
       O << "\tfcmpeq ";
       break;
     }
@@ -140,10 +139,7 @@ void Mwv208InstPrinter::printOperand(const MCInst *MI, int opNum,
 
   if (MO.isReg()) {
     unsigned Reg = MO.getReg();
-    if (isV9(STI))
-      printRegName(O, Reg, JJ::RegNamesStateReg);
-    else
-      printRegName(O, Reg);
+    printRegName(O, Reg);
     return;
   }
 
@@ -153,12 +149,12 @@ void Mwv208InstPrinter::printOperand(const MCInst *MI, int opNum,
       O << (int)MO.getImm();
       return;
 
-    case JJ::TICCri: // Fall through
-    case JJ::TICCrr: // Fall through
-    case JJ::TRAPri: // Fall through
-    case JJ::TRAPrr: // Fall through
-    case JJ::TXCCri: // Fall through
-    case JJ::TXCCrr: // Fall through
+    case MWV208::TICCri: // Fall through
+    case MWV208::TICCrr: // Fall through
+    case MWV208::TRAPri: // Fall through
+    case MWV208::TRAPrr: // Fall through
+    case MWV208::TXCCri: // Fall through
+    case MWV208::TXCCrr: // Fall through
       // Only seven-bit values up to 127.
       O << ((int)MO.getImm() & 0x7f);
       return;
@@ -176,7 +172,7 @@ void Mwv208InstPrinter::printMemOperand(const MCInst *MI, int opNum,
   const MCOperand &Op2 = MI->getOperand(opNum + 1);
 
   bool PrintedFirstOperand = false;
-  if (Op1.isReg() && Op1.getReg() != JJ::G0) {
+  if (Op1.isReg() && Op1.getReg() != MWV208::G0) {
     printOperand(MI, opNum, STI, O);
     PrintedFirstOperand = true;
   }
@@ -184,7 +180,7 @@ void Mwv208InstPrinter::printMemOperand(const MCInst *MI, int opNum,
   // Skip the second operand iff it adds nothing (literal 0 or %g0) and we've
   // already printed the first one
   const bool SkipSecondOperand =
-      PrintedFirstOperand && ((Op2.isReg() && Op2.getReg() == JJ::G0) ||
+      PrintedFirstOperand && ((Op2.isReg() && Op2.getReg() == MWV208::G0) ||
                               (Op2.isImm() && Op2.getImm() == 0));
 
   if (!SkipSecondOperand) {
@@ -201,41 +197,41 @@ void Mwv208InstPrinter::printCCOperand(const MCInst *MI, int opNum,
   switch (MI->getOpcode()) {
   default:
     break;
-  case JJ::FBCOND:
-  case JJ::FBCONDA:
-  case JJ::FBCOND_V9:
-  case JJ::FBCONDA_V9:
-  case JJ::BPFCC:
-  case JJ::BPFCCA:
-  case JJ::BPFCCNT:
-  case JJ::BPFCCANT:
-  case JJ::MOVFCCrr:
-  case JJ::V9MOVFCCrr:
-  case JJ::MOVFCCri:
-  case JJ::V9MOVFCCri:
-  case JJ::FMOVS_FCC:
-  case JJ::V9FMOVS_FCC:
-  case JJ::FMOVD_FCC:
-  case JJ::V9FMOVD_FCC:
-  case JJ::FMOVQ_FCC:
-  case JJ::V9FMOVQ_FCC:
+  case MWV208::FBCOND:
+  case MWV208::FBCONDA:
+  case MWV208::FBCOND_V9:
+  case MWV208::FBCONDA_V9:
+  case MWV208::BPFCC:
+  case MWV208::BPFCCA:
+  case MWV208::BPFCCNT:
+  case MWV208::BPFCCANT:
+  case MWV208::MOVFCCrr:
+  case MWV208::V9MOVFCCrr:
+  case MWV208::MOVFCCri:
+  case MWV208::V9MOVFCCri:
+  case MWV208::FMOVS_FCC:
+  case MWV208::V9FMOVS_FCC:
+  case MWV208::FMOVD_FCC:
+  case MWV208::V9FMOVD_FCC:
+  case MWV208::FMOVQ_FCC:
+  case MWV208::V9FMOVQ_FCC:
     // Make sure CC is a fp conditional flag.
     CC = (CC < JJCC::FCC_BEGIN) ? (CC + JJCC::FCC_BEGIN) : CC;
     break;
-  case JJ::CBCOND:
-  case JJ::CBCONDA:
+  case MWV208::CBCOND:
+  case MWV208::CBCONDA:
     // Make sure CC is a cp conditional flag.
     CC = (CC < JJCC::CPCC_BEGIN) ? (CC + JJCC::CPCC_BEGIN) : CC;
     break;
-  case JJ::BPR:
-  case JJ::BPRA:
-  case JJ::BPRNT:
-  case JJ::BPRANT:
-  case JJ::MOVRri:
-  case JJ::MOVRrr:
-  case JJ::FMOVRS:
-  case JJ::FMOVRD:
-  case JJ::FMOVRQ:
+  case MWV208::BPR:
+  case MWV208::BPRA:
+  case MWV208::BPRNT:
+  case MWV208::BPRANT:
+  case MWV208::MOVRri:
+  case MWV208::MOVRrr:
+  case MWV208::FMOVRS:
+  case MWV208::FMOVRD:
+  case MWV208::FMOVRQ:
     // Make sure CC is a register conditional flag.
     CC = (CC < JJCC::REG_BEGIN) ? (CC + JJCC::REG_BEGIN) : CC;
     break;
@@ -278,10 +274,7 @@ void Mwv208InstPrinter::printASITag(const MCInst *MI, int opNum,
                                     raw_ostream &O) {
   unsigned Imm = MI->getOperand(opNum).getImm();
   auto ASITag = Mwv208ASITag::lookupASITagByEncoding(Imm);
-  if (isV9(STI) && ASITag)
-    O << '#' << ASITag->Name;
-  else
-    O << Imm;
+  O << Imm;
 }
 
 void Mwv208InstPrinter::printPrefetchTag(const MCInst *MI, int opNum,

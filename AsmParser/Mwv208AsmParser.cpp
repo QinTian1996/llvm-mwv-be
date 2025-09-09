@@ -700,7 +700,7 @@ bool Mwv208AsmParser::expandSET(MCInst &Inst, SMLoc IDLoc,
     const MCExpr *Expr =
         adjustPICRelocation(Mwv208MCExpr::VK_Mwv208_HI, ValExpr);
     TmpInst.setLoc(IDLoc);
-    TmpInst.setOpcode(JJ::SETHIi);
+    TmpInst.setOpcode(MWV208::SETHIi);
     TmpInst.addOperand(MCRegOp);
     TmpInst.addOperand(MCOperand::createExpr(Expr));
     Instructions.push_back(TmpInst);
@@ -725,7 +725,7 @@ bool Mwv208AsmParser::expandSET(MCInst &Inst, SMLoc IDLoc,
     else
       Expr = adjustPICRelocation(Mwv208MCExpr::VK_Mwv208_LO, ValExpr);
     TmpInst.setLoc(IDLoc);
-    TmpInst.setOpcode(JJ::ORri);
+    TmpInst.setOpcode(MWV208::ORri);
     TmpInst.addOperand(MCRegOp);
     TmpInst.addOperand(PrevReg);
     TmpInst.addOperand(MCOperand::createExpr(Expr));
@@ -752,7 +752,7 @@ bool Mwv208AsmParser::expandSETX(MCInst &Inst, SMLoc IDLoc,
   // Very small immediates can be expressed directly as a single `or`.
   if (IsImm && isInt<13>(ImmValue)) {
     // or rd, val, rd
-    Instructions.push_back(MCInstBuilder(JJ::ORri)
+    Instructions.push_back(MCInstBuilder(MWV208::ORri)
                                .addReg(MCRegOp.getReg())
                                .addReg(Mwv208::G0)
                                .addExpr(ValExpr));
@@ -763,12 +763,12 @@ bool Mwv208AsmParser::expandSETX(MCInst &Inst, SMLoc IDLoc,
 
   // sethi %hi(val), rd
   Instructions.push_back(
-      MCInstBuilder(JJ::SETHIi)
+      MCInstBuilder(MWV208::SETHIi)
           .addReg(MCRegOp.getReg())
           .addExpr(adjustPICRelocation(Mwv208MCExpr::VK_Mwv208_HI, ValExpr)));
   // or    rd, %lo(val), rd
   Instructions.push_back(
-      MCInstBuilder(JJ::ORri)
+      MCInstBuilder(MWV208::ORri)
           .addReg(MCRegOp.getReg())
           .addReg(MCRegOp.getReg())
           .addExpr(adjustPICRelocation(Mwv208MCExpr::VK_Mwv208_LO, ValExpr)));
@@ -783,22 +783,22 @@ bool Mwv208AsmParser::expandSETX(MCInst &Inst, SMLoc IDLoc,
 
   // sethi %hh(val), tmp
   Instructions.push_back(
-      MCInstBuilder(JJ::SETHIi)
+      MCInstBuilder(MWV208::SETHIi)
           .addReg(MCTmpOp.getReg())
           .addExpr(adjustPICRelocation(Mwv208MCExpr::VK_Mwv208_HH, ValExpr)));
   // or    tmp, %hm(val), tmp
   Instructions.push_back(
-      MCInstBuilder(JJ::ORri)
+      MCInstBuilder(MWV208::ORri)
           .addReg(MCTmpOp.getReg())
           .addReg(MCTmpOp.getReg())
           .addExpr(adjustPICRelocation(Mwv208MCExpr::VK_Mwv208_HM, ValExpr)));
   // sllx  tmp, 32, tmp
-  Instructions.push_back(MCInstBuilder(JJ::SLLXri)
+  Instructions.push_back(MCInstBuilder(MWV208::SLLXri)
                              .addReg(MCTmpOp.getReg())
                              .addReg(MCTmpOp.getReg())
                              .addImm(32));
   // or    tmp, rd, rd
-  Instructions.push_back(MCInstBuilder(JJ::ORrr)
+  Instructions.push_back(MCInstBuilder(MWV208::ORrr)
                              .addReg(MCRegOp.getReg())
                              .addReg(MCTmpOp.getReg())
                              .addReg(MCRegOp.getReg()));
@@ -822,11 +822,11 @@ bool Mwv208AsmParser::matchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       Inst.setLoc(IDLoc);
       Instructions.push_back(Inst);
       break;
-    case JJ::SET:
+    case MWV208::SET:
       if (expandSET(Inst, IDLoc, Instructions))
         return true;
       break;
-    case JJ::SETX:
+    case MWV208::SETX:
       if (expandSETX(Inst, IDLoc, Instructions))
         return true;
       break;
@@ -1466,7 +1466,7 @@ MCRegister Mwv208AsmParser::matchRegisterName(const AsmToken &Tok,
                                               unsigned &RegKind) {
   RegKind = Mwv208Operand::rk_None;
   if (!Tok.is(AsmToken::Identifier))
-    return JJ::NoRegister;
+    return MWV208::NoRegister;
 
   StringRef Name = Tok.getString();
   MCRegister Reg = MatchRegisterName(Name.lower());
@@ -1476,38 +1476,39 @@ MCRegister Mwv208AsmParser::matchRegisterName(const AsmToken &Tok,
   if (Reg) {
     // Some registers have identical spellings. The generated matcher might
     // have chosen one or another spelling, e.g. "%fp" or "%i6" might have been
-    // matched to either JJ::I6 or JJ::I6_I7. Other parts of Mwv208AsmParser
-    // are not prepared for this, so we do some canonicalization.
+    // matched to either MWV208::I6 or MWV208::I6_I7. Other parts of
+    // Mwv208AsmParser are not prepared for this, so we do some
+    // canonicalization.
 
     // See the note in Mwv208RegisterInfo.td near ASRRegs register class.
-    if (Reg == JJ::ASR4 && Name == "tick") {
+    if (Reg == MWV208::ASR4 && Name == "tick") {
       RegKind = Mwv208Operand::rk_Special;
-      return JJ::TICK;
+      return MWV208::TICK;
     }
 
-    if (MRI.getRegClass(JJ::IntRegsRegClassID).contains(Reg)) {
+    if (MRI.getRegClass(MWV208::IntRegsRegClassID).contains(Reg)) {
       RegKind = Mwv208Operand::rk_IntReg;
       return Reg;
     }
-    if (MRI.getRegClass(JJ::FPRegsRegClassID).contains(Reg)) {
+    if (MRI.getRegClass(MWV208::FPRegsRegClassID).contains(Reg)) {
       RegKind = Mwv208Operand::rk_FloatReg;
       return Reg;
     }
-    if (MRI.getRegClass(JJ::CoprocRegsRegClassID).contains(Reg)) {
+    if (MRI.getRegClass(MWV208::CoprocRegsRegClassID).contains(Reg)) {
       RegKind = Mwv208Operand::rk_CoprocReg;
       return Reg;
     }
 
     // Canonicalize G0_G1 ... G30_G31 etc. to G0 ... G30.
-    if (MRI.getRegClass(JJ::IntPairRegClassID).contains(Reg)) {
+    if (MRI.getRegClass(MWV208::IntPairRegClassID).contains(Reg)) {
       RegKind = Mwv208Operand::rk_IntReg;
-      return MRI.getSubReg(Reg, JJ::sub_even);
+      return MRI.getSubReg(Reg, MWV208::sub_even);
     }
 
     // Canonicalize D0 ... D15 to F0 ... F30.
-    if (MRI.getRegClass(JJ::DFPRegsRegClassID).contains(Reg)) {
+    if (MRI.getRegClass(MWV208::DFPRegsRegClassID).contains(Reg)) {
       // D16 ... D31 do not have sub-registers.
-      if (MCRegister SubReg = MRI.getSubReg(Reg, JJ::sub_even)) {
+      if (MCRegister SubReg = MRI.getSubReg(Reg, MWV208::sub_even)) {
         RegKind = Mwv208Operand::rk_FloatReg;
         return SubReg;
       }
@@ -1517,12 +1518,12 @@ MCRegister Mwv208AsmParser::matchRegisterName(const AsmToken &Tok,
 
     // The generated matcher does not currently return QFP registers.
     // If it changes, we will need to handle them in a similar way.
-    assert(!MRI.getRegClass(JJ::QFPRegsRegClassID).contains(Reg));
+    assert(!MRI.getRegClass(MWV208::QFPRegsRegClassID).contains(Reg));
 
     // Canonicalize C0_C1 ... C30_C31 to C0 ... C30.
-    if (MRI.getRegClass(JJ::CoprocPairRegClassID).contains(Reg)) {
+    if (MRI.getRegClass(MWV208::CoprocPairRegClassID).contains(Reg)) {
       RegKind = Mwv208Operand::rk_CoprocReg;
-      return MRI.getSubReg(Reg, JJ::sub_even);
+      return MRI.getSubReg(Reg, MWV208::sub_even);
     }
 
     // Other registers do not need special handling.
@@ -1544,53 +1545,53 @@ MCRegister Mwv208AsmParser::matchRegisterName(const AsmToken &Tok,
   if (Name == "xcc") {
     // FIXME:: check 64bit.
     RegKind = Mwv208Operand::rk_Special;
-    return JJ::ICC;
+    return MWV208::ICC;
   }
 
   // JPS1 extension - aliases for ASRs
   // Section 5.2.11 - Ancillary State Registers (ASRs)
   if (Name == "pcr") {
     RegKind = Mwv208Operand::rk_Special;
-    return JJ::ASR16;
+    return MWV208::ASR16;
   }
   if (Name == "pic") {
     RegKind = Mwv208Operand::rk_Special;
-    return JJ::ASR17;
+    return MWV208::ASR17;
   }
   if (Name == "dcr") {
     RegKind = Mwv208Operand::rk_Special;
-    return JJ::ASR18;
+    return MWV208::ASR18;
   }
   if (Name == "gsr") {
     RegKind = Mwv208Operand::rk_Special;
-    return JJ::ASR19;
+    return MWV208::ASR19;
   }
   if (Name == "set_softint") {
     RegKind = Mwv208Operand::rk_Special;
-    return JJ::ASR20;
+    return MWV208::ASR20;
   }
   if (Name == "clear_softint") {
     RegKind = Mwv208Operand::rk_Special;
-    return JJ::ASR21;
+    return MWV208::ASR21;
   }
   if (Name == "softint") {
     RegKind = Mwv208Operand::rk_Special;
-    return JJ::ASR22;
+    return MWV208::ASR22;
   }
   if (Name == "tick_cmpr") {
     RegKind = Mwv208Operand::rk_Special;
-    return JJ::ASR23;
+    return MWV208::ASR23;
   }
   if (Name == "stick" || Name == "sys_tick") {
     RegKind = Mwv208Operand::rk_Special;
-    return JJ::ASR24;
+    return MWV208::ASR24;
   }
   if (Name == "stick_cmpr" || Name == "sys_tick_cmpr") {
     RegKind = Mwv208Operand::rk_Special;
-    return JJ::ASR25;
+    return MWV208::ASR25;
   }
 
-  return JJ::NoRegister;
+  return MWV208::NoRegister;
 }
 
 // Determine if an expression contains a reference to the symbol

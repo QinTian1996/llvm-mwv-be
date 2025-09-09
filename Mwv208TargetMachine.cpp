@@ -64,31 +64,9 @@ static Reloc::Model getEffectiveRelocModel(std::optional<Reloc::Model> RM) {
   return RM.value_or(Reloc::Static);
 }
 
-// Code models. Some only make sense for 64-bit code.
-//
-// SunCC  Reloc   CodeModel  Constraints
-// abs32  Static  Small      text+data+bss linked below 2^32 bytes
-// abs44  Static  Medium     text+data+bss linked below 2^44 bytes
-// abs64  Static  Large      text smaller than 2^31 bytes
-// pic13  PIC_    Small      GOT < 2^13 bytes
-// pic32  PIC_    Medium     GOT < 2^32 bytes
-//
-// All code models require that the text segment is smaller than 2GB.
 static CodeModel::Model
 getEffectiveMwv208CodeModel(std::optional<CodeModel::Model> CM, Reloc::Model RM,
                             bool Is64Bit, bool JIT) {
-  if (CM) {
-    if (*CM == CodeModel::Tiny)
-      report_fatal_error("Target does not support the tiny CodeModel", false);
-    if (*CM == CodeModel::Kernel)
-      report_fatal_error("Target does not support the kernel CodeModel", false);
-    return *CM;
-  }
-  if (Is64Bit) {
-    if (JIT)
-      return CodeModel::Large;
-    return RM == Reloc::PIC_ ? CodeModel::Small : CodeModel::Medium;
-  }
   return CodeModel::Small;
 }
 
@@ -112,14 +90,14 @@ Mwv208TargetMachine::Mwv208TargetMachine(const Target &T, const Triple &TT,
 
 Mwv208TargetMachine::~Mwv208TargetMachine() = default;
 
-const Mwv208Subtarget *
+const TargetSubtargetInfo *
 Mwv208TargetMachine::getSubtargetImpl(const Function &F) const {
   std::string CPU = "v8";
   std::string FS = "";
 
   if (!DefaultSubtarget) {
     DefaultSubtarget =
-        std::make_unique<Mwv208Subtarget>(CPU, CPU, FS, *this, false);
+        std::make_unique<TargetSubtargetInfo>(CPU, CPU, FS, *this, false);
   }
   return DefaultSubtarget.get();
 }

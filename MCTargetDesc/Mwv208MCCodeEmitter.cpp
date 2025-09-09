@@ -99,14 +99,14 @@ void Mwv208MCCodeEmitter::encodeInstruction(const MCInst &MI,
   switch (MI.getOpcode()) {
   default:
     break;
-  case JJ::TLS_CALL:
+  case MWV208::TLS_CALL:
     SymOpNo = 1;
     break;
-  case JJ::GDOP_LDrr:
-  case JJ::GDOP_LDXrr:
-  case JJ::TLS_ADDrr:
-  case JJ::TLS_LDrr:
-  case JJ::TLS_LDXrr:
+  case MWV208::GDOP_LDrr:
+  case MWV208::GDOP_LDXrr:
+  case MWV208::TLS_ADDrr:
+  case MWV208::TLS_LDrr:
+  case MWV208::TLS_LDXrr:
     SymOpNo = 3;
     break;
   }
@@ -185,7 +185,7 @@ Mwv208MCCodeEmitter::getCallTargetOpValue(const MCInst &MI, unsigned OpNo,
   const MCExpr *Expr = MO.getExpr();
   const Mwv208MCExpr *SExpr = dyn_cast<Mwv208MCExpr>(Expr);
 
-  if (MI.getOpcode() == JJ::TLS_CALL) {
+  if (MI.getOpcode() == MWV208::TLS_CALL) {
     // No fixups for __tls_get_addr. Will emit for fixups for tls_symbol in
     // encodeInstruction.
 #ifndef NDEBUG

@@ -37,7 +37,7 @@ public:
                       bool JIT, bool is64bit);
   ~Mwv208TargetMachine() override;
 
-  const Mwv208Subtarget *getSubtargetImpl(const Function &F) const override;
+  const TargetSubtargetInfo *getSubtargetImpl(const Function &F) const override;
 
   // Pass Pipeline Configuration
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;

@@ -4,7 +4,6 @@ set(LLVM_TARGET_DEFINITIONS Mwv208.td)
 
 tablegen(LLVM Mwv208GenAsmMatcher.inc -gen-asm-matcher)
 tablegen(LLVM Mwv208GenAsmWriter.inc -gen-asm-writer)
-tablegen(LLVM Mwv208GenCallingConv.inc -gen-callingconv)
 tablegen(LLVM Mwv208GenDAGISel.inc -gen-dag-isel)
 tablegen(LLVM Mwv208GenDisassemblerTables.inc -gen-disassembler)
 tablegen(LLVM Mwv208GenInstrInfo.inc -gen-instr-info)

@@ -50,7 +50,7 @@ static MCAsmInfo *createMwv208MCAsmInfo(const MCRegisterInfo &MRI,
                                         const Triple &TT,
                                         const MCTargetOptions &Options) {
   MCAsmInfo *MAI = new Mwv208ELFMCAsmInfo(TT);
-  unsigned Reg = MRI.getDwarfRegNum(JJ::O6, true);
+  unsigned Reg = MRI.getDwarfRegNum(MWV208::O6, true);
   MCCFIInstruction Inst = MCCFIInstruction::cfiDefCfa(nullptr, Reg, 0);
   MAI->addInitialFrameState(Inst);
   return MAI;
@@ -60,7 +60,7 @@ static MCAsmInfo *createMwv208V9MCAsmInfo(const MCRegisterInfo &MRI,
                                           const Triple &TT,
                                           const MCTargetOptions &Options) {
   MCAsmInfo *MAI = new Mwv208ELFMCAsmInfo(TT);
-  unsigned Reg = MRI.getDwarfRegNum(JJ::O6, true);
+  unsigned Reg = MRI.getDwarfRegNum(MWV208::O6, true);
   MCCFIInstruction Inst = MCCFIInstruction::cfiDefCfa(nullptr, Reg, 2047);
   MAI->addInitialFrameState(Inst);
   return MAI;
@@ -74,7 +74,7 @@ static MCInstrInfo *createMwv208MCInstrInfo() {
 
 static MCRegisterInfo *createMwv208MCRegisterInfo(const Triple &TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
-  InitMwv208MCRegisterInfo(X, JJ::O7);
+  InitMwv208MCRegisterInfo(X, MWV208::O7);
   return X;
 }
 

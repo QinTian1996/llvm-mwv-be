@@ -6,374 +6,120 @@
 //
 //===----------------------------------------------------------------------===//
 
-class InstSP<dag outs, dag ins, string asmstr, list<dag> pattern,
-             InstrItinClass itin = NoItinerary>
-   : Instruction {
-  field bits<32> Inst;
+class MWV208Inst<dag outs, dag ins, string asmstr, list<dag> pattern, bits<6> opcode>
+  : Instruction {
+  let Namespace = "MWV208";
+  let OutOperandList = outs;  // 输出操作数
+  let InOperandList = ins;   // 输入操作数
+  let AsmString = asmstr;    // 汇编格式
+  let Pattern = pattern;     // 对应的DAG模式
 
-  let Namespace = "JJ";
-  let Size = 4;
+  // 指令长度：128位（16字节）
+  let Size = 16;
+  field bits<128> Inst; // 指令编码字段
 
-  bits<2> op;
-  let Inst{31-30} = op;               // Top two bits are the 'op' field
+  // General Format Inst Word 0
+  bits<6> OP_CODE = opcode;  // 操作码，占6位
+  bits<5> CONDITION_CODE = 0; // 条件码，占5位
+  bits<1> SATURATE = 0; // 饱和标志，占1位
+  bits<1> DEST_VALID = 0; // 目的操作数有效标志，占2位
+  bits<3> DEST_REL_ADR = 0; // 目的操作数相对地址，占3位
+  bits<7> DEST_ADR = 0; // 目的操作数地址，占7位
+  bits<4> DEST_WRITE_ENABLE = 0; // 目的操作数写使能，占4位
+  bits<5> SAMPLER_NUM = 0; // 采样器编号，占5位 也用作destMask4:8
+  let Inst{5-0}   = OP_CODE;
+  let Inst{10-6}  = CONDITION_CODE;
+  let Inst{11-11} = SATURATE;
+  let Inst{12-12} = DEST_VALID;
+  let Inst{15-13} = DEST_REL_ADR;
+  let Inst{22-16} = DEST_ADR;
+  let Inst{26-23} = DEST_WRITE_ENABLE;
+  let Inst{31-27} = SAMPLER_NUM;
 
-  dag OutOperandList = outs;
-  dag InOperandList = ins;
-  let AsmString   = asmstr;
-  let Pattern = pattern;
+  // General Format Inst Word 1
+  bits<3> SAMPLER_REL_ADR = 0; // 采样器相对地址，占3位
+  bits<8> SAMPLER_SWIZZLE = 0; // 采样器swizzle，占8位
+  bits<1> SRC0_VALID = 0; // 源操作数0有效标志，占1位
+  bits<9> SRC0_ADR = 0; // 源操作数0地址，占9位
+  bits<1> INST_TYPE_0 = 0; // 指令类型，占1位
+  bits<8> SRC0_SWIZZLE = 0; // 源操作数0swizzle，占8位
+  bits<1> SRC0_MODIFIER_NEG = 0; // 源操作数0取反标志，占1位
+  bits<1> SRC0_MODIFIER_ABS = 0; // 源操作数0取绝对值标志，占1位
+  let Inst{34-32} = SAMPLER_REL_ADR;
+  let Inst{42-35} = SAMPLER_SWIZZLE;
+  let Inst{43-43} = SRC0_VALID;
+  let Inst{52-44} = SRC0_ADR;
+  let Inst{53-53} = INST_TYPE_0;
+  let Inst{61-54} = SRC0_SWIZZLE;
+  let Inst{62-62} = SRC0_MODIFIER_NEG;
+  let Inst{63-63} = SRC0_MODIFIER_ABS;
 
-  let DecoderNamespace = "Mwv208";
-  field bits<32> SoftFail = 0;
-
-  let Itinerary = itin;
+  // General Format Inst Word 2
+  bits<3> SRC0_REL_ADR = 0; // 源操作数0相对地址，占3位
+  bits<3> SRC0_type = 0; // 源操作数0类型，占3位
+  bits<1> SRC1_VALID = 0; // 源操作数1有效标志，占1位
+  bits<9> SRC1_ADR = 0; // 源操作数1地址，占9位
+  bits<1> OP_CODE_MSB6 = 0; // ???，占1位\
+  bits<8> SRC1_SWIZZLE = 0; // 源操作数1swizzle，占8位
+  bits<1> SRC1_MODIFIER_NEG = 0; // 源操作数1取反标志，占1位
+  bits<1> SRC1_MODIFIER_ABS = 0; // 源操作数1取绝对值标志，占1位
+  bits<3> SRC1_REL_ADR = 0; // 源操作数1相对地址，占3位
+  bits<2> INST_TYPE_1 = 0; // 指令类型，占2位
+  let Inst{66-64} = SRC0_REL_ADR;
+  let Inst{69-67} = SRC0_type;
+  let Inst{70-70} = SRC1_VALID;
+  let Inst{79-71} = SRC1_ADR;
+  let Inst{80-80} = OP_CODE_MSB6;
+  let Inst{88-81} = SRC1_SWIZZLE;
+  let Inst{89-89} = SRC1_MODIFIER_NEG;
+  let Inst{90-90} = SRC1_MODIFIER_ABS;
+  let Inst{93-91} = SRC1_REL_ADR;
+  let Inst{95-94} = INST_TYPE_1;
+  
 }
 
-//===----------------------------------------------------------------------===//
-// Format #2 instruction classes in the Mwv208
-//===----------------------------------------------------------------------===//
-
-// Format 2 instructions
-class F2<dag outs, dag ins, string asmstr, list<dag> pattern,
-         InstrItinClass itin = NoItinerary>
-   : InstSP<outs, ins, asmstr, pattern, itin> {
-  bits<3>  op2;
-  bits<22> imm22;
-  let op          = 0;    // op = 0
-  let Inst{24-22} = op2;
-  let Inst{21-0}  = imm22;
-}
-
-// Specific F2 classes: Mwv208V8 manual, page 44
-//
-class F2_1<bits<3> op2Val, dag outs, dag ins, string asmstr, list<dag> pattern,
-           InstrItinClass itin = NoItinerary>
-   : F2<outs, ins, asmstr, pattern, itin> {
-  bits<5>  rd;
-
-  let op2         = op2Val;
-
-  let Inst{29-25} = rd;
-}
-
-class F2_2<bits<3> op2Val, bit annul, dag outs, dag ins, string asmstr,
-           list<dag> pattern, InstrItinClass itin = NoItinerary>
-   : F2<outs, ins, asmstr, pattern, itin> {
-  bits<4>   cond;
-  let op2         = op2Val;
-
-  let Inst{29}    = annul;
-  let Inst{28-25} = cond;
-}
-
-class F2_3<bits<3> op2Val, bit annul, bit pred,
-           dag outs, dag ins, string asmstr, list<dag> pattern,
-           InstrItinClass itin = NoItinerary>
-   : InstSP<outs, ins, asmstr, pattern, itin> {
-  bits<2>  cc;
-  bits<4>  cond;
-  bits<19> imm19;
-
-  let op          = 0;    // op = 0
-
-  let Inst{29}    = annul;
-  let Inst{28-25} = cond;
-  let Inst{24-22} = op2Val;
-  let Inst{21-20} = cc;
-  let Inst{19}    = pred;
-  let Inst{18-0}  = imm19;
-}
-
-class F2_4<bit annul, bit pred, dag outs, dag ins,
-           string asmstr, list<dag> pattern, InstrItinClass itin = NoItinerary>
-   : InstSP<outs, ins, asmstr, pattern, itin> {
-  bits<16> imm16;
-  bits<5>  rs1;
-  bits<3>  rcond;
-
-  let op          = 0;    // op = 0
-
-  let Inst{29}    = annul;
-  let Inst{28}    = 0;
-  let Inst{27-25} = rcond;
-  let Inst{24-22} = 0b011;
-  let Inst{21-20} = imm16{15-14};
-  let Inst{19}    = pred;
-  let Inst{18-14} = rs1;
-  let Inst{13-0}  = imm16{13-0};
-}
-
-
-//===----------------------------------------------------------------------===//
-// Format #3 instruction classes in the Mwv208
-//===----------------------------------------------------------------------===//
-
-class F3<dag outs, dag ins, string asmstr, list<dag> pattern,
-         InstrItinClass itin = NoItinerary>
-   : InstSP<outs, ins, asmstr, pattern, itin> {
-  bits<5> rd;
-  bits<6> op3;
-  bits<5> rs1;
-  let op{1} = 1;   // Op = 2 or 3
-  let Inst{29-25} = rd;
-  let Inst{24-19} = op3;
-  let Inst{18-14} = rs1;
-}
-
-// Specific F3 classes: Mwv208V8 manual, page 44
-//
-class F3_1_asi<bits<2> opVal, bits<6> op3val, dag outs, dag ins,
-           string asmstr, list<dag> pattern, InstrItinClass itin = NoItinerary>
-   : F3<outs, ins, asmstr, pattern, itin> {
-  bits<8> asi;
-  bits<5> rs2;
-
-  let op         = opVal;
-  let op3        = op3val;
-
-  let Inst{13}   = 0;     // i field = 0
-  let Inst{12-5} = asi;   // address space identifier
-  let Inst{4-0}  = rs2;
-}
-
-// CAS instructions does not use an immediate even when i=1
-class F3_1_cas_asi<bits<2> opVal, bits<6> op3val, dag outs, dag ins,
-           string asmstr, list<dag> pattern, InstrItinClass itin = NoItinerary>
-   : F3_1_asi<opVal, op3val, outs, ins, asmstr, pattern, itin> {
-  let asi = 0;
-  let Inst{13}   = 1;     // i field = 1
-}
-
-class F3_1<bits<2> opVal, bits<6> op3val, dag outs, dag ins, string asmstr,
-       list<dag> pattern, InstrItinClass itin = IIC_iu_instr>
-  : F3_1_asi<opVal, op3val, outs, ins, asmstr, pattern, itin> {
-  let asi = 0;
-}
-
-class F3_2<bits<2> opVal, bits<6> op3val, dag outs, dag ins,
-           string asmstr, list<dag> pattern, InstrItinClass itin = IIC_iu_instr>
-   : F3<outs, ins, asmstr, pattern, itin> {
-  bits<13> simm13;
-
-  let op         = opVal;
-  let op3        = op3val;
-
-  let Inst{13}   = 1;     // i field = 1
-  let Inst{12-0} = simm13;
-}
-
-// floating-point
-class F3_3<bits<2> opVal, bits<6> op3val, bits<9> opfval, dag outs, dag ins,
-           string asmstr, list<dag> pattern, InstrItinClass itin = NoItinerary>
-   : F3<outs, ins, asmstr, pattern, itin> {
-  bits<5> rs2;
-
-  let op         = opVal;
-  let op3        = op3val;
-
-  let Inst{13-5} = opfval;   // fp opcode
-  let Inst{4-0}  = rs2;
-}
-
-// floating-point unary operations.
-class F3_3u<bits<2> opVal, bits<6> op3val, bits<9> opfval, dag outs, dag ins,
-           string asmstr, list<dag> pattern, InstrItinClass itin = NoItinerary>
-   : F3<outs, ins, asmstr, pattern, itin> {
-  bits<5> rs2;
-
-  let op         = opVal;
-  let op3        = op3val;
-  let rs1        = 0;
-
-  let Inst{13-5} = opfval;   // fp opcode
-  let Inst{4-0}  = rs2;
-}
-
-// floating-point compares.
-class F3_3c<bits<2> opVal, bits<6> op3val, bits<9> opfval, dag outs, dag ins,
-           string asmstr, list<dag> pattern, InstrItinClass itin = NoItinerary>
-   : F3<outs, ins, asmstr, pattern, itin> {
-  bits<5> rs2;
-
-  let op         = opVal;
-  let op3        = op3val;
-
-  let Inst{13-5} = opfval;   // fp opcode
-  let Inst{4-0}  = rs2;
-}
-
-// Shift by register rs2.
-class F3_Sr<bits<2> opVal, bits<6> op3val, bit xVal, dag outs, dag ins,
-            string asmstr, list<dag> pattern, InstrItinClass itin = IIC_iu_instr>
-   : F3<outs, ins, asmstr, pattern, itin> {
-  bit x = xVal;           // 1 for 64-bit shifts.
-  bits<5> rs2;
-
-  let op         = opVal;
-  let op3        = op3val;
-
-  let Inst{13}   = 0;     // i field = 0
-  let Inst{12}   = x;     // extended registers.
-  let Inst{4-0}  = rs2;
-}
-
-// Shift by immediate.
-class F3_Si<bits<2> opVal, bits<6> op3val, bit xVal, dag outs, dag ins,
-            string asmstr, list<dag> pattern, InstrItinClass itin = IIC_iu_instr>
-   : F3<outs, ins, asmstr, pattern, itin> {
-  bit x = xVal;           // 1 for 64-bit shifts.
-  bits<6> shcnt;          // shcnt32 / shcnt64.
-
-  let op         = opVal;
-  let op3        = op3val;
-
-  let Inst{13}   = 1;     // i field = 1
-  let Inst{12}   = x;     // extended registers.
-  let Inst{5-0}  = shcnt;
-}
-
-// Define rr and ri shift instructions with patterns.
-multiclass F3_S<string OpcStr, bits<6> Op3Val, bit XVal, SDNode OpNode,
-                ValueType VT, Operand SIT, RegisterClass RC,
-                InstrItinClass itin = IIC_iu_instr> {
-  def rr : F3_Sr<2, Op3Val, XVal, (outs RC:$rd), (ins RC:$rs1, IntRegs:$rs2),
-                 !strconcat(OpcStr, " $rs1, $rs2, $rd"),
-                 [(set VT:$rd, (OpNode VT:$rs1, i32:$rs2))],
-                 itin>;
-  def ri : F3_Si<2, Op3Val, XVal, (outs RC:$rd), (ins RC:$rs1, SIT:$shcnt),
-                 !strconcat(OpcStr, " $rs1, $shcnt, $rd"),
-                 [(set VT:$rd, (OpNode VT:$rs1, (i32 imm:$shcnt)))],
-                 itin>;
-}
-
-class F4<bits<6> op3, dag outs, dag ins, string asmstr, list<dag> pattern,
-         InstrItinClass itin = NoItinerary>
-   : InstSP<outs, ins, asmstr, pattern, itin> {
-  bits<5> rd;
-
-  let op          = 2;
-  let Inst{29-25} = rd;
-  let Inst{24-19} = op3;
-}
-
-
-class F4_1<bits<6> op3, dag outs, dag ins,
-           string asmstr, list<dag> pattern,
-           InstrItinClass itin = NoItinerary>
-   : F4<op3, outs, ins, asmstr, pattern, itin> {
-  bit    intcc;
-  bits<2> cc;
-  bits<4> cond;
-  bits<5> rs2;
-
-  let Inst{4-0}   = rs2;
-  let Inst{12-11} = cc;
-  let Inst{13}    = 0;
-  let Inst{17-14} = cond;
-  let Inst{18}    = intcc;
-}
-
-class F4_2<bits<6> op3, dag outs, dag ins,
-            string asmstr, list<dag> pattern,
-            InstrItinClass itin = NoItinerary>
-   : F4<op3, outs, ins, asmstr, pattern, itin> {
-  bit      intcc;
-  bits<2>  cc;
-  bits<4>  cond;
-  bits<11> simm11;
-
-  let Inst{10-0}  = simm11;
-  let Inst{12-11} = cc;
-  let Inst{13}    = 1;
-  let Inst{17-14} = cond;
-  let Inst{18}    = intcc;
-}
-
-class F4_3<bits<6> op3, bits<6> opf_low, dag outs, dag ins,
-           string asmstr, list<dag> pattern,
-           InstrItinClass itin = NoItinerary>
-   : F4<op3, outs, ins, asmstr, pattern, itin> {
-  bits<4> cond;
-  bit     intcc;
-  bits<2> opf_cc;
-  bits<5> rs2;
-
-  let Inst{18}     = 0;
-  let Inst{17-14}  = cond;
-  let Inst{13}     = intcc;
-  let Inst{12-11}  = opf_cc;
-  let Inst{10-5}   = opf_low;
-  let Inst{4-0}    = rs2;
-}
-
-class F4_4r<bits<6> op3, bits<5> opf_low, dag outs, dag ins,
-            string asmstr, list<dag> pattern,
-            InstrItinClass itin = NoItinerary>
-   : F4<op3, outs, ins, asmstr, pattern, itin> {
-  bits<5> rs1;
-  bits<5> rs2;
-  bits<3> rcond;
-  let Inst{18-14} = rs1;
-  let Inst{13}    = 0;  // IsImm
-  let Inst{12-10} = rcond;
-  let Inst{9-5}   = opf_low;
-  let Inst{4-0}   = rs2;
-}
-
-
-class F4_4i<bits<6> op3, dag outs, dag ins,
-            string asmstr, list<dag> pattern,
-           InstrItinClass itin = NoItinerary>
-   : F4<op3, outs, ins, asmstr, pattern, itin> {
-  bits<5>  rs1;
-  bits<10> simm10;
-  bits<3>  rcond;
-  let Inst{18-14} = rs1;
-  let Inst{13}    = 1;  // IsImm
-  let Inst{12-10} = rcond;
-  let Inst{9-0}   = simm10;
-}
-
-
-class TRAPSP<bits<6> op3Val, bit isimm, dag outs, dag ins,
-             string asmstr, list<dag> pattern,
-             InstrItinClass itin = NoItinerary>
-   : F3<outs, ins, asmstr, pattern, itin> {
-   bits<4> cond;
-   bits<2> cc;
-
-   let op = 0b10;
-   let rd{4} = 0;
-   let rd{3-0} = cond;
-   let op3 = op3Val;
-   let Inst{13} = isimm;
-   let Inst{12-11} = cc;
+/* Gerneral Format Inst*/
+class MWV208GFInst<dag outs, dag ins, string asmstr, list<dag> pattern, bits<6> opcode>
+  : MWV208Inst<outs, ins, asmstr, pattern, opcode> {
+  // General Format Inst Word 3
+  bits<3> SRC1_TYPE = 0; // 源操作数1类型，占3位
+  bits<1> SRC2_VALID = 0; // 源操作数2有效标志，占1位
+  bits<9> SRC2_ADR = 0; // 源操作数2地址, 占9位
+  bits<1> DEST_ADR_MSB7 = 0; // 目的操作数地址高位，占1位
+  bits<8> SRC2_SWIZZLE = 0; // 源操作数2swizzle，占8位
+  bits<1> SRC2_MODIFIER_NEG = 0; // 源操作数2取反标志，占1位
+  bits<1> SRC2_MODIFIER_ABS = 0; // 源操作数2取绝对值标志，占1位
+  bits<1> DEST_ADR_MSB8 = 0; // 目的操作数地址更高位，占1位
+  bits<3> SRC2_REL_ADR = 0; // 源操作数2相对地址，占3位
+  bits<3> SRC2_TYPE = 0; // 源操作数2类型，占3位
+  bits<1> DEST_SOURCE = 0; // 目的操作数来源，占1位
+  let Inst{98-96} =   SRC1_TYPE;
+  let Inst{99-99} =   SRC2_VALID;
+  let Inst{108-100} = SRC2_ADR;
+  let Inst{109-109} = DEST_ADR_MSB7;
+  let Inst{117-110} = SRC2_SWIZZLE;
+  let Inst{118-118} = SRC2_MODIFIER_NEG;
+  let Inst{119-119} = SRC2_MODIFIER_ABS;
+  let Inst{120-120} = DEST_ADR_MSB8;
+  let Inst{123-121} = SRC2_REL_ADR;
+  let Inst{126-124} = SRC2_TYPE;
+  let Inst{127-127} = DEST_SOURCE;
 
 }
 
-class TRAPSPrr<bits<6> op3Val, dag outs, dag ins,
-               string asmstr, list<dag> pattern,
-               InstrItinClass itin = NoItinerary>
-   : TRAPSP<op3Val, 0, outs, ins, asmstr, pattern, itin> {
-   bits<5> rs2;
+/* Control Flow Format Inst*/
+class MWV208FCFInst<dag outs, dag ins, string asmstr, list<dag> pattern, bits<6> opcode>
+  : MWV208Inst<outs, ins, asmstr, pattern, opcode> {
+  // Control Flow Format Inst Word 3
+  bits<3> SRC1_TYPE = 0; // 源操作数1类型，占3位
+  bits<1> SRC2_VALID = 0; // 源操作数2有效标志，占1位
+  bits<1> LOOP_OP = 0; // 循环操作码，占1位
+  bits<2> RESERVED = 0; // 保留位，占2位
+  bits<20>Target = 0; // 目标地址，占20位
+  let Inst{98-96} = SRC1_TYPE;
+  let Inst{99-99} = SRC2_VALID;
+  let Inst{100-100} = LOOP_OP;
+  let Inst{102-101} = RESERVED;
+  let Inst{122-103} = Target;
 
-   let Inst{10-5} = 0;
-   let Inst{4-0}  = rs2;
-}
-
-class TRAPSPri<bits<6> op3Val, dag outs, dag ins,
-               string asmstr, list<dag> pattern,
-               InstrItinClass itin = NoItinerary>
-   : TRAPSP<op3Val, 1, outs, ins, asmstr, pattern, itin> {
-   bits<8> imm;
-
-   let Inst{10-8} = 0;
-   let Inst{7-0}  = imm;
-}
-
-// Pseudo-instructions for alternate assembly syntax (never used by codegen).
-// These are aliases that require C++ handling to convert to the target
-// instruction, while InstAliases can be handled directly by tblgen.
-class AsmPseudoInst<dag outs, dag ins, string asm>
-  : InstSP<outs, ins, asm, []> {
-  let isPseudo = 1;
 }

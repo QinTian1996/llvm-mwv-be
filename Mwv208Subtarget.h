@@ -15,7 +15,6 @@
 #define LLVM_LIB_TARGET_MWV208_MWV208SUBTARGET_H
 
 #include "MCTargetDesc/Mwv208MCTargetDesc.h"
-#include "Mwv208FrameLowering.h"
 #include "Mwv208ISelLowering.h"
 #include "Mwv208InstrInfo.h"
 #include "llvm/CodeGen/SelectionDAGTargetInfo.h"
@@ -31,15 +30,10 @@
 namespace llvm {
 class StringRef;
 
-class Mwv208Subtarget : public Mwv208GenSubtargetInfo {
-  // ReserveRegister[i] - Register #i is not available as a general purpose
-  // register.
-  BitVector ReserveRegister;
+class Mwv208Subtarget : public TargetSubtargetInfo {
 
   Triple TargetTriple;
   virtual void anchor();
-
-  bool Is64Bit;
 
 #define GET_SUBTARGETINFO_MACRO(ATTRIBUTE, DEFAULT, GETTER)                    \
   bool ATTRIBUTE = DEFAULT;
@@ -55,9 +49,7 @@ public:
                   const StringRef &FS, const TargetMachine &TM, bool is64bit);
 
   const Mwv208InstrInfo *getInstrInfo() const override { return &InstrInfo; }
-  const TargetFrameLowering *getFrameLowering() const override {
-    return &FrameLowering;
-  }
+
   const Mwv208RegisterInfo *getRegisterInfo() const override {
     return &InstrInfo.getRegisterInfo();
   }
@@ -80,17 +72,6 @@ public:
   Mwv208Subtarget &initializeSubtargetDependencies(StringRef CPU,
                                                    StringRef TuneCPU,
                                                    StringRef FS);
-
-  bool is64Bit() const { return Is64Bit; }
-
-  bool isRegisterReserved(MCPhysReg PhysReg) const {
-    return ReserveRegister[PhysReg];
-  }
-
-  /// Given a actual stack size as determined by FrameInfo, this function
-  /// returns adjusted framesize which includes space for register window
-  /// spills and arguments.
-  int getAdjustedFrameSize(int stackSize) const;
 
   bool isTargetLinux() const { return TargetTriple.isOSLinux(); }
 };
